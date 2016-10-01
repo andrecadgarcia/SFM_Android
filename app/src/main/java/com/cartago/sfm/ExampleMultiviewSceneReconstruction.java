@@ -18,6 +18,7 @@ package com.cartago.sfm;
  * limitations under the License.
  */
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
@@ -110,18 +111,26 @@ public class ExampleMultiviewSceneReconstruction {
     boolean processedImage[];
 
     // List of all 3D features
-    List<Feature3D> featuresAll = new ArrayList<Feature3D>();
+    List<Feature3D> featuresAll;
 
     // used to provide initial estimate of the 3D scene
     ModelMatcher<Se3_F64, AssociatedPair> estimateEssential;
     ModelMatcher<Se3_F64, Point2D3D> estimatePnP;
     ModelFitter<Se3_F64, Point2D3D> refinePnP = FactoryMultiView.refinePnP(1e-12, 40);
 
+    BitmapFactory.Options opt = new BitmapFactory.Options();
+    Context context;
+
     /**
      * Process the images and reconstructor the scene as a point cloud using matching interest points between
      * images.
      */
-    public void process(IntrinsicParameters intrinsic, List<Bitmap> colorImages) {
+    public void process(IntrinsicParameters intrinsic, List<Integer> colorImages, Context context) {
+
+        featuresAll = new ArrayList<>();
+        opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+        this.context = context;
 
         pixelToNorm = LensDistortionOps.transformPoint(intrinsic).undistort_F64(true, false);
 
@@ -175,7 +184,7 @@ public class ExampleMultiviewSceneReconstruction {
      * Initialize the reconstruction by finding the image which is most similar to the "best" image.  Estimate
      * its pose up to a scale factor and create the initial set of 3D features
      */
-    private void initializeReconstruction(List<Bitmap> colorImages, double[][] matrix, int bestImage) {
+    private void initializeReconstruction(List<Integer> colorImages, double[][] matrix, int bestImage) {
         // Set all images, but the best one, as not having been estimated yet
         estimatedImage = new boolean[colorImages.size()];
         processedImage = new boolean[colorImages.size()];
@@ -198,7 +207,7 @@ public class ExampleMultiviewSceneReconstruction {
      * Select the frame which has the most connections to all other frames.  The is probably a good location
      * to start since it will require fewer hops to estimate the motion of other frames
      */
-    private int selectMostConnectFrame(List<Bitmap> colorImages, double[][] matrix) {
+    private int selectMostConnectFrame(List<Integer> colorImages, double[][] matrix) {
         int bestImage = -1;
         int bestCount = 0;
         for (int i = 0; i < colorImages.size(); i++) {
@@ -220,11 +229,12 @@ public class ExampleMultiviewSceneReconstruction {
     /**
      * Detect image features in all the images.  Save location, description, and color
      */
-    private void detectImageFeatures(List<Bitmap> colorImages) {
+    private void detectImageFeatures(List<Integer> colorImages) {
         System.out.println("Detecting Features in each image.  Total " + colorImages.size());
+        Bitmap colorImage;
         for (int i = 0; i < colorImages.size(); i++) {
             System.out.print("*");
-            Bitmap colorImage = colorImages.get(i);
+            colorImage = BitmapFactory.decodeResource(this.context.getResources(), colorImages.get(i), opt);
             FastQueue<BrightFeature> features = new SurfFeatureQueue(64);
             FastQueue<Point2D_F64> pixels = new FastQueue<Point2D_F64>(Point2D_F64.class, true);
             GrowQueue_I32 colors = new GrowQueue_I32();
@@ -233,6 +243,8 @@ public class ExampleMultiviewSceneReconstruction {
             imageVisualFeatures.add(features);
             imagePixels.add(pixels);
             imageColors.add(colors);
+
+            colorImage.recycle();
         }
         System.out.println();
     }
