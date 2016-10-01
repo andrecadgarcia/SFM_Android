@@ -1,4 +1,4 @@
-package com.cartago.sfm;
+package com.andrecadgarcia.sfm;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

@@ -1,4 +1,4 @@
-package com.cartago.sfm;
+package com.andrecadgarcia.sfm.fragment;
 
 /*
  * Copyright (c) 2011-2016, Peter Abeles. All Rights Reserved.
@@ -31,11 +31,6 @@ import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.factory.geo.*;
 import boofcv.gui.d3.ColorPoint3D;
-import boofcv.gui.d3.PointCloudViewer;
-import boofcv.gui.image.ShowImages;
-import boofcv.io.UtilIO;
-import boofcv.io.image.ConvertBufferedImage;
-import boofcv.io.image.UtilImageIO;
 import boofcv.struct.calib.IntrinsicParameters;
 import boofcv.struct.distort.PointTransform_F64;
 import boofcv.struct.feature.AssociatedIndex;
@@ -46,7 +41,6 @@ import boofcv.struct.geo.Point2D3D;
 import boofcv.struct.image.GrayF32;
 import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point3D_F64;
-import georegression.struct.point.Vector3D_F32;
 import georegression.struct.se.Se3_F64;
 import georegression.transform.se.SePointOps_F64;
 
