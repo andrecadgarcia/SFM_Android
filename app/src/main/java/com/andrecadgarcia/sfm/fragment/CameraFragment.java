@@ -1,6 +1,8 @@
 package com.andrecadgarcia.sfm.fragment;
 
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,7 +18,10 @@ import android.widget.ImageButton;
 
 import com.andrecadgarcia.sfm.R;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -81,6 +86,13 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback {
             pngCallback = new Camera.PictureCallback() {
                 public void onPictureTaken(byte[] data, Camera camera) {
                     FileOutputStream outStream = null;
+
+                    Bitmap original = BitmapFactory.decodeByteArray(data , 0, data.length);
+                    Bitmap resized = Bitmap.createScaledBitmap(original, 360, 240, true);
+
+                    ByteArrayOutputStream blob = new ByteArrayOutputStream();
+                    resized.compress(Bitmap.CompressFormat.PNG, 0, blob);
+
                     try {
                         String path = Environment.getExternalStorageDirectory() +
                                 File.separator + "SFM";
@@ -111,7 +123,7 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback {
                         dir = new File(path);
                         outStream = new FileOutputStream(dir);
                         pictures_taken++;
-                        outStream.write(data);
+                        outStream.write(blob.toByteArray());
                         outStream.close();
                         Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
                     } catch (FileNotFoundException e) {
