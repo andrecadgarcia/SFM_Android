@@ -23,5 +23,11 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/cardList"
+        android:layout_below="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
 
 </RelativeLayout>
