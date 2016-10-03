@@ -14,6 +14,7 @@ import com.andrecadgarcia.sfm.fragment.CalibrationFragment;
 import com.andrecadgarcia.sfm.fragment.CameraFragment;
 import com.andrecadgarcia.sfm.fragment.GalleryFragment;
 import com.andrecadgarcia.sfm.fragment.HomeFragment;
+import com.andrecadgarcia.sfm.fragment.SFMResultFragment;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -29,15 +30,18 @@ public class MainActivity extends AppCompatActivity {
     public static final Integer CAMERA_FRAGMENT = 1;
     public static final Integer CALIBRATION_FRAGMENT = 2;
     public static final Integer GALERRY_FRAGMENT = 3;
+    public static final Integer SFMRESULT_FRAGMENT = 4;
 
     private static final String CURRENT_FRAGMENT = "current_fragment_index_flag";
 
     private HashMap<Integer, Fragment> hashFragment;
     private int currentFragmentIndex;
 
-    private boolean doubleBackToExitPressedOnce;
+    private boolean doubleBackToExitPressedOnce, processingSFM;
 
     private Toolbar toolbar;
+
+    private String result = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         hashFragment.put(CAMERA_FRAGMENT, new CameraFragment());
         hashFragment.put(CALIBRATION_FRAGMENT, new CalibrationFragment());
         hashFragment.put(GALERRY_FRAGMENT, new GalleryFragment());
+        hashFragment.put(SFMRESULT_FRAGMENT, new SFMResultFragment());
 
         if(savedInstanceState != null){
             currentFragmentIndex = savedInstanceState.getInt(CURRENT_FRAGMENT);
@@ -65,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         config.locale = locale;
 
         doubleBackToExitPressedOnce = false;
+        processingSFM = false;
 
         /*
         List<Integer> images = new ArrayList<>();
@@ -147,6 +153,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }, 2000);
         }
+        else if (currentFragmentIndex == SFMRESULT_FRAGMENT) {
+            if (!processingSFM) {
+                fragmentTransaction(GALERRY_FRAGMENT);
+            }
+        }
         else{
             fragmentTransaction(HOME_FRAGMENT);
         }
@@ -167,9 +178,24 @@ public class MainActivity extends AppCompatActivity {
             case 4:
                 toolbar.setTitle(getString(R.string.menu_item_title4));
                 break;
+            case 5:
+                toolbar.setTitle(getString(R.string.menu_item_title4));
+                break;
             default:
                 toolbar.setTitle(getString(R.string.app_name));
         }
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
+
+    public String getResult() {
+        return this.result;
+    }
+
+    public void setProcessingSFM(boolean processingSFM) {
+        this.processingSFM = processingSFM;
     }
 
     @Override

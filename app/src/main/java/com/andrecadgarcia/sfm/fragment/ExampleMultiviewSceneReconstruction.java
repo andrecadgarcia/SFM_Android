@@ -21,6 +21,7 @@ package com.andrecadgarcia.sfm.fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import boofcv.abst.feature.associate.AssociateDescription;
 import boofcv.abst.feature.associate.ScoreAssociation;
@@ -51,6 +52,8 @@ import org.ddogleg.fitting.modelset.ModelMatcher;
 import org.ddogleg.struct.FastQueue;
 import org.ddogleg.struct.GrowQueue_I32;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,14 +118,16 @@ public class ExampleMultiviewSceneReconstruction {
     BitmapFactory.Options opt = new BitmapFactory.Options();
     Context context;
 
+    String result = "";
+
     /**
      * Process the images and reconstructor the scene as a point cloud using matching interest points between
      * images.
      */
-    public void process(IntrinsicParameters intrinsic, List<Integer> colorImages, Context context) {
+    public String process(IntrinsicParameters intrinsic, List<String> colorImages, Context context) {
 
         featuresAll = new ArrayList<>();
-        opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        opt.inPreferredConfig = Bitmap.Config.RGB_565;
 
         this.context = context;
 
@@ -166,10 +171,14 @@ public class ExampleMultiviewSceneReconstruction {
             ColorPoint3D p = cloud.grow();
             p.set(t.worldPt.x, t.worldPt.y, t.worldPt.z);
             p.rgb = t.color;
+            result += "x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color + '\n';
             System.out.println("x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color);
         }
 
+        result += "Finish" + '\n';
         System.out.println("Finish");
+
+        return result;
         //gui.setPreferredSize(new Dimension(500, 500));
         //ShowImages.showWindow(gui, "Points");
     }
@@ -178,7 +187,7 @@ public class ExampleMultiviewSceneReconstruction {
      * Initialize the reconstruction by finding the image which is most similar to the "best" image.  Estimate
      * its pose up to a scale factor and create the initial set of 3D features
      */
-    private void initializeReconstruction(List<Integer> colorImages, double[][] matrix, int bestImage) {
+    private void initializeReconstruction(List<String> colorImages, double[][] matrix, int bestImage) {
         // Set all images, but the best one, as not having been estimated yet
         estimatedImage = new boolean[colorImages.size()];
         processedImage = new boolean[colorImages.size()];
@@ -201,7 +210,7 @@ public class ExampleMultiviewSceneReconstruction {
      * Select the frame which has the most connections to all other frames.  The is probably a good location
      * to start since it will require fewer hops to estimate the motion of other frames
      */
-    private int selectMostConnectFrame(List<Integer> colorImages, double[][] matrix) {
+    private int selectMostConnectFrame(List<String> colorImages, double[][] matrix) {
         int bestImage = -1;
         int bestCount = 0;
         for (int i = 0; i < colorImages.size(); i++) {
@@ -223,23 +232,32 @@ public class ExampleMultiviewSceneReconstruction {
     /**
      * Detect image features in all the images.  Save location, description, and color
      */
-    private void detectImageFeatures(List<Integer> colorImages) {
+    private void detectImageFeatures(List<String> colorImages) {
+        result += "Detecting Features in each image.  Total " + colorImages.size() + '\n';
         System.out.println("Detecting Features in each image.  Total " + colorImages.size());
         Bitmap colorImage;
+        File f;
         for (int i = 0; i < colorImages.size(); i++) {
+            result += "*";
             System.out.print("*");
-            colorImage = BitmapFactory.decodeResource(this.context.getResources(), colorImages.get(i), opt);
-            FastQueue<BrightFeature> features = new SurfFeatureQueue(64);
-            FastQueue<Point2D_F64> pixels = new FastQueue<Point2D_F64>(Point2D_F64.class, true);
-            GrowQueue_I32 colors = new GrowQueue_I32();
-            detectFeatures(colorImage, features, pixels, colors);
+            f = new File(colorImages.get(i));
+            try {
+                colorImage = BitmapFactory.decodeStream(new FileInputStream(f), null, opt);
+                FastQueue<BrightFeature> features = new SurfFeatureQueue(64);
+                FastQueue<Point2D_F64> pixels = new FastQueue<Point2D_F64>(Point2D_F64.class, true);
+                GrowQueue_I32 colors = new GrowQueue_I32();
+                detectFeatures(colorImage, features, pixels, colors);
 
-            imageVisualFeatures.add(features);
-            imagePixels.add(pixels);
-            imageColors.add(colors);
+                imageVisualFeatures.add(features);
+                imagePixels.add(pixels);
+                imageColors.add(colors);
 
-            colorImage.recycle();
+                colorImage.recycle();
+            } catch (Exception e) {
+                Log.d("","Open Image");
+            }
         }
+        result += '\n';
         System.out.println();
     }
 
@@ -271,11 +289,16 @@ public class ExampleMultiviewSceneReconstruction {
     private void printConnectionMatrix(double[][] matrix) {
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix.length; j++) {
-                if (matrix[i][j] >= connectThreshold)
+                if (matrix[i][j] >= connectThreshold) {
+                    result += "#";
                     System.out.print("#");
-                else
+                }
+                else{
+                    result += ".";
                     System.out.print(".");
+                }
             }
+            result += '\n';
             System.out.println();
         }
     }

@@ -62,7 +62,7 @@ public class GalleryFragment extends Fragment {
                 folders.add(folder.getName());
             }
 
-            galleryAdapter = new GalleryRecyclerAdapter(folders);
+            galleryAdapter = new GalleryRecyclerAdapter(folders, getContext());
             galleryAdapter.notifyDataSetChanged();
 
 
