@@ -68,12 +68,14 @@ public class GalleryFragment extends Fragment {
                         showingPNG = false;
                         openFolder("Models");
                         rv_cardList.getAdapter().notifyDataSetChanged();
+                        galleryAdapter.setPNGViwer(false);
 
                     } else {
                         iv_extension.setImageDrawable(getResources().getDrawable(R.drawable.png, null));
                         showingPNG = true;
                         openFolder("Pictures");
                         rv_cardList.getAdapter().notifyDataSetChanged();
+                        galleryAdapter.setPNGViwer(true);
                     }
 
                 }
