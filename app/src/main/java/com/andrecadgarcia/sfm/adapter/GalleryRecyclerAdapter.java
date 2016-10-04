@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,10 @@ import com.andrecadgarcia.sfm.activity.MainActivity;
 import com.andrecadgarcia.sfm.fragment.ExampleMultiviewSceneReconstruction;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,6 +120,47 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
             alert.dismiss();
             after = System.currentTimeMillis();
             System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
+            FileOutputStream outStream = null;
+            OutputStreamWriter myOutWriter = null;
+            try {
+                String path = Environment.getExternalStorageDirectory() +
+                        File.separator + "SFM";
+                File dir = new File(path);
+                if(!dir.exists()){
+                    dir.mkdir();
+                    Log.d("Log", "onDirCreated");
+                }
+                path += File.separator + "Media";
+                dir = new File(path);
+                if(!dir.exists()){
+                    dir.mkdir();
+                    Log.d("Log", "onDirCreated");
+                }
+                path += File.separator + "Models";
+                dir = new File(path);
+                if(!dir.exists()){
+                    dir.mkdir();
+                    Log.d("Log", "onDirCreated");
+                }
+                path += File.separator + String.valueOf(System.currentTimeMillis()) + ".obj";
+
+                dir = new File(path);
+                outStream = new FileOutputStream(dir);
+                myOutWriter = new OutputStreamWriter(outStream);
+                myOutWriter.append(result);
+                myOutWriter.close();
+
+                outStream.flush();
+                outStream.close();
+                Log.d("Log", "onPictureTaken - wrote bytes: " + result.length());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+            }
+
+
             ((MainActivity) context).setProcessingSFM(false);
             ((MainActivity) context).setResult(result);
             ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);

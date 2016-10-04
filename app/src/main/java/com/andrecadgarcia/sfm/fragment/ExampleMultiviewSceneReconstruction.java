@@ -167,15 +167,16 @@ public class ExampleMultiviewSceneReconstruction {
         FastQueue<ColorPoint3D> cloud = new FastQueue<ColorPoint3D>(200,ColorPoint3D.class,true);
 
         for (Feature3D t : featuresAll) {
+            result += "v ";
             //gui.addPoint(t.worldPt.x, t.worldPt.y, t.worldPt.z, t.color)
             ColorPoint3D p = cloud.grow();
             p.set(t.worldPt.x, t.worldPt.y, t.worldPt.z);
             p.rgb = t.color;
-            result += "x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color + '\n';
+            result += t.worldPt.x + " " + t.worldPt.y + " " + t.worldPt.z;
             System.out.println("x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color);
+            result += '\n';
         }
 
-        result += "Finish" + '\n';
         System.out.println("Finish");
 
         return result;
@@ -233,12 +234,10 @@ public class ExampleMultiviewSceneReconstruction {
      * Detect image features in all the images.  Save location, description, and color
      */
     private void detectImageFeatures(List<String> colorImages) {
-        result += "Detecting Features in each image.  Total " + colorImages.size() + '\n';
         System.out.println("Detecting Features in each image.  Total " + colorImages.size());
         Bitmap colorImage;
         File f;
         for (int i = 0; i < colorImages.size(); i++) {
-            result += "*";
             System.out.print("*");
             f = new File(colorImages.get(i));
             try {
@@ -257,7 +256,6 @@ public class ExampleMultiviewSceneReconstruction {
                 Log.d("","Open Image");
             }
         }
-        result += '\n';
         System.out.println();
     }
 
@@ -290,15 +288,12 @@ public class ExampleMultiviewSceneReconstruction {
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix.length; j++) {
                 if (matrix[i][j] >= connectThreshold) {
-                    result += "#";
                     System.out.print("#");
                 }
                 else{
-                    result += ".";
                     System.out.print(".");
                 }
             }
-            result += '\n';
             System.out.println();
         }
     }
