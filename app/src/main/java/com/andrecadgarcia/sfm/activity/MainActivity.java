@@ -14,6 +14,7 @@ import com.andrecadgarcia.sfm.fragment.CalibrationFragment;
 import com.andrecadgarcia.sfm.fragment.CameraFragment;
 import com.andrecadgarcia.sfm.fragment.GalleryFragment;
 import com.andrecadgarcia.sfm.fragment.HomeFragment;
+import com.andrecadgarcia.sfm.fragment.ModelViewerFragment;
 import com.andrecadgarcia.sfm.fragment.SFMResultFragment;
 
 import java.util.HashMap;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     public static final Integer CALIBRATION_FRAGMENT = 2;
     public static final Integer GALERRY_FRAGMENT = 3;
     public static final Integer SFMRESULT_FRAGMENT = 4;
+    public static final Integer MODELVIEWER_FRAGMENT = 5;
 
     private static final String CURRENT_FRAGMENT = "current_fragment_index_flag";
 
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         hashFragment.put(CALIBRATION_FRAGMENT, new CalibrationFragment());
         hashFragment.put(GALERRY_FRAGMENT, new GalleryFragment());
         hashFragment.put(SFMRESULT_FRAGMENT, new SFMResultFragment());
+        hashFragment.put(MODELVIEWER_FRAGMENT, new ModelViewerFragment());
 
         if(savedInstanceState != null){
             currentFragmentIndex = savedInstanceState.getInt(CURRENT_FRAGMENT);
@@ -72,39 +75,10 @@ public class MainActivity extends AppCompatActivity {
         doubleBackToExitPressedOnce = false;
         processingSFM = false;
 
-        /*
-        List<Integer> images = new ArrayList<>();
+    }
 
-        BitmapFactory.Options opt = new BitmapFactory.Options();
-        opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-        images.add(R.drawable.dino1);
-        images.add(R.drawable.dino2);
-        images.add(R.drawable.dino3);
-        images.add(R.drawable.dino4);
-        images.add(R.drawable.dino5);
-        images.add(R.drawable.dino6);
-        images.add(R.drawable.dino7);
-        images.add(R.drawable.dino8);
-        images.add(R.drawable.dino9);
-        images.add(R.drawable.dino10);
-        images.add(R.drawable.dino11);
-        images.add(R.drawable.dino12);
-        images.add(R.drawable.dino13);
-        images.add(R.drawable.dino14);
-        images.add(R.drawable.dino15);
-        images.add(R.drawable.dino16);
-
-        ExampleMultiviewSceneReconstruction example = new ExampleMultiviewSceneReconstruction();
-
-        IntrinsicParameters intrinsic = new IntrinsicParameters(325.55,325.55,1,125.55,125.55,260,320);
-
-        long before = System.currentTimeMillis();
-        example.process(intrinsic, images, this);
-        long after = System.currentTimeMillis();
-
-        System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
-        */
+    public Fragment getClass(Integer name) {
+        return hashFragment.get(name);
     }
 
     @Override
@@ -153,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }, 2000);
         }
-        else if (currentFragmentIndex == SFMRESULT_FRAGMENT) {
+        else if (currentFragmentIndex == SFMRESULT_FRAGMENT || currentFragmentIndex == MODELVIEWER_FRAGMENT ) {
             if (!processingSFM) {
                 fragmentTransaction(GALERRY_FRAGMENT);
             }
@@ -179,6 +153,9 @@ public class MainActivity extends AppCompatActivity {
                 toolbar.setTitle(getString(R.string.menu_item_title4));
                 break;
             case 5:
+                toolbar.setTitle(getString(R.string.menu_item_title4));
+                break;
+            case 6:
                 toolbar.setTitle(getString(R.string.menu_item_title4));
                 break;
             default:
