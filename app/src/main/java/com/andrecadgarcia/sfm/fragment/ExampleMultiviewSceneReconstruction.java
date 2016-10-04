@@ -167,15 +167,26 @@ public class ExampleMultiviewSceneReconstruction {
         FastQueue<ColorPoint3D> cloud = new FastQueue<ColorPoint3D>(200,ColorPoint3D.class,true);
 
         for (Feature3D t : featuresAll) {
-            result += "v ";
             //gui.addPoint(t.worldPt.x, t.worldPt.y, t.worldPt.z, t.color)
             ColorPoint3D p = cloud.grow();
             p.set(t.worldPt.x, t.worldPt.y, t.worldPt.z);
             p.rgb = t.color;
+            result += "v ";
             result += t.worldPt.x + " " + t.worldPt.y + " " + t.worldPt.z;
+            result += '\n';
             System.out.println("x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color);
+
+        }
+
+        for(int i = 0 ; i <= featuresAll.size(); i++) {
+            result += "f ";
+            result += ((i % (featuresAll.size())) + 1) + " " + (((i + 1) % (featuresAll.size())) + 1) + " " + (((i + 2) % (featuresAll.size())) + 1);
+            result += '\n';
+            result += "f ";
+            result += (((i + 2)  % (featuresAll.size())) + 1) + " " + (((i + 1) % (featuresAll.size())) + 1) + " " + ((i % (featuresAll.size())) + 1);
             result += '\n';
         }
+
 
         System.out.println("Finish");
 
