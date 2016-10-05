@@ -1,5 +1,6 @@
 package com.andrecadgarcia.sfm.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -8,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.andrecadgarcia.sfm.R;
+import com.andrecadgarcia.sfm.activity.calibration.CalibrationActivity;
 import com.andrecadgarcia.sfm.activity.MainActivity;
 
 /**
@@ -39,13 +41,14 @@ public class HomeFragment extends Fragment {
             ((Button) rootview.findViewById(R.id.bt_calibration)).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ((MainActivity) getContext()).fragmentTransaction(MainActivity.CALIBRATION_FRAGMENT);
+                    Intent intent = new Intent(getContext(), CalibrationActivity.class);
+                    startActivity(intent);
                 }
             });
             ((Button) rootview.findViewById(R.id.bt_gallery)).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ((MainActivity) getContext()).fragmentTransaction(MainActivity.GALERRY_FRAGMENT);
+                    ((MainActivity) getContext()).fragmentTransaction(MainActivity.GALLERY_FRAGMENT);
                 }
             });
 

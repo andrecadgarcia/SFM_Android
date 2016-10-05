@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm.fragment;
+package com.andrecadgarcia.sfm;
 
 /*
  * Copyright (c) 2011-2016, Peter Abeles. All Rights Reserved.

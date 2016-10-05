@@ -2,16 +2,12 @@ package com.andrecadgarcia.sfm.adapter;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -19,16 +15,10 @@ import android.widget.TextView;
 
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
-import com.andrecadgarcia.sfm.fragment.ExampleMultiviewSceneReconstruction;
+import com.andrecadgarcia.sfm.ExampleMultiviewSceneReconstruction;
 import com.andrecadgarcia.sfm.fragment.ModelViewerFragment;
 
-import org.rajawali3d.lights.ALight;
-import org.rajawali3d.lights.DirectionalLight;
-import org.rajawali3d.loader.LoaderOBJ;
-import org.rajawali3d.loader.ParsingException;
 import org.rajawali3d.renderer.RajawaliRenderer;
-import org.rajawali3d.surface.IRajawaliSurface;
-import org.rajawali3d.surface.RajawaliSurfaceView;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -53,6 +43,9 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     List<String> pictures;
 
     private boolean showingPNG = true;
+
+    ExampleMultiviewSceneReconstruction example;
+    IntrinsicParameters intrinsic;
 
     RajawaliRenderer renderer;
 
@@ -95,8 +88,25 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                         pictures.add(folder.getAbsolutePath());
                     }
 
-                    ExecuteSFM sfm = new ExecuteSFM();
-                    sfm.execute();
+                    intrinsic = ((MainActivity) context).preference.intrinsic;
+                    if (intrinsic == null) {
+                        new AlertDialog.Builder(context)
+                                .setTitle("Camera Parameters Error")
+                                .setMessage("Please calibrate camera")
+                                .setCancelable(true)
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        dialogInterface.dismiss();
+                                    }
+                                })
+                                .create().show();
+                    }
+                    else {
+                        ExecuteSFM sfm = new ExecuteSFM();
+                        sfm.execute();
+                    }
+
                 }
                 else {
                     ModelViewerFragment viewer = (ModelViewerFragment)((MainActivity) context).getClass(MainActivity.MODELVIEWER_FRAGMENT);
@@ -148,8 +158,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         @Override
         protected String doInBackground(String... urls) {
 
-            ExampleMultiviewSceneReconstruction example = new ExampleMultiviewSceneReconstruction();
-            IntrinsicParameters intrinsic = new IntrinsicParameters(325.55,325.55,1,125.55,125.55,260,320);
+            example = new ExampleMultiviewSceneReconstruction();
             return example.process(intrinsic, pictures, context);
 
         }

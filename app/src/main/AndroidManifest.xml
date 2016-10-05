@@ -22,6 +22,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activity.calibration.CalibrationActivity" android:screenOrientation="landscape"/>
+        <activity android:name=".activity.calibration.CalibrationComputeActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity android:name=".activity.calibration.CalibrationHelpActivity"/>
+        <activity android:name=".activity.calibration.DemoVideoDisplayActivity" android:screenOrientation="landscape"/>
     </application>
 
 </manifest>
