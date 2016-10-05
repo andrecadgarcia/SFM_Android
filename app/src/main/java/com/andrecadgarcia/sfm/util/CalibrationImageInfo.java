@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm;
+package com.andrecadgarcia.sfm.util;
 
 import boofcv.alg.geo.calibration.CalibrationObservation;
 import boofcv.struct.image.GrayF32;

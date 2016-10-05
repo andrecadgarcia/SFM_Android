@@ -2,10 +2,7 @@ package com.andrecadgarcia.sfm;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.View;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;
@@ -13,16 +10,10 @@ import org.rajawali3d.loader.LoaderOBJ;
 import org.rajawali3d.loader.ParsingException;
 import org.rajawali3d.materials.Material;
 import org.rajawali3d.materials.methods.DiffuseMethod;
-import org.rajawali3d.materials.textures.ATexture;
-import org.rajawali3d.materials.textures.Texture;
 import org.rajawali3d.math.vector.Vector3;
-import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.renderer.RajawaliRenderer;
-import org.rajawali3d.util.OnObjectPickedListener;
 
 import java.io.File;
-
-import static android.R.attr.path;
 
 /**
  * Created by Andre Garcia on 04/10/16.

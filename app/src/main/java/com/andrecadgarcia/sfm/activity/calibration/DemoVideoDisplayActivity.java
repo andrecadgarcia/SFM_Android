@@ -3,7 +3,7 @@ package com.andrecadgarcia.sfm.activity.calibration;
 import android.hardware.Camera;
 import android.os.Bundle;
 
-import com.andrecadgarcia.sfm.DemoPreference;
+import com.andrecadgarcia.sfm.util.DemoPreference;
 import com.andrecadgarcia.sfm.activity.MainActivity;
 
 import boofcv.android.gui.VideoDisplayActivity;

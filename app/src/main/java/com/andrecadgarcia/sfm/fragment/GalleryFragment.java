@@ -1,9 +1,5 @@
 package com.andrecadgarcia.sfm.fragment;
 
-import android.app.LoaderManager;
-import android.app.ProgressDialog;
-import android.content.Loader;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -13,16 +9,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.adapter.GalleryRecyclerAdapter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 

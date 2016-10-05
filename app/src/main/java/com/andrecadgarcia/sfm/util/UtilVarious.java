@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm;
+package com.andrecadgarcia.sfm.util;
 
 import android.hardware.Camera;
 

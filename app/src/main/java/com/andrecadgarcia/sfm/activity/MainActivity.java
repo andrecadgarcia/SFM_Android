@@ -13,10 +13,10 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
-import com.andrecadgarcia.sfm.CameraSpecs;
-import com.andrecadgarcia.sfm.DemoPreference;
+import com.andrecadgarcia.sfm.util.CameraSpecs;
+import com.andrecadgarcia.sfm.util.DemoPreference;
 import com.andrecadgarcia.sfm.R;
-import com.andrecadgarcia.sfm.UtilVarious;
+import com.andrecadgarcia.sfm.util.UtilVarious;
 import com.andrecadgarcia.sfm.fragment.CameraFragment;
 import com.andrecadgarcia.sfm.fragment.GalleryFragment;
 import com.andrecadgarcia.sfm.fragment.HomeFragment;

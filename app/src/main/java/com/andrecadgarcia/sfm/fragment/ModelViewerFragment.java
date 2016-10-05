@@ -8,9 +8,7 @@ import android.view.ViewGroup;
 
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.Renderer;
-import com.andrecadgarcia.sfm.activity.MainActivity;
 
-import org.rajawali3d.surface.IRajawaliSurface;
 import org.rajawali3d.surface.RajawaliSurfaceView;
 
 /**

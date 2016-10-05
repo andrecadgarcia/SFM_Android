@@ -1,7 +1,6 @@
 package com.andrecadgarcia.sfm.activity.calibration;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.hardware.Camera;
@@ -14,12 +13,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.andrecadgarcia.sfm.CalibrationImageInfo;
+import com.andrecadgarcia.sfm.util.CalibrationImageInfo;
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;

@@ -17,7 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.andrecadgarcia.sfm.CalibrationImageInfo;
+import com.andrecadgarcia.sfm.util.CalibrationImageInfo;
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
 
