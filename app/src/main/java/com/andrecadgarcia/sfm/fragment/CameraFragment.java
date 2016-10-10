@@ -2,7 +2,10 @@ package com.andrecadgarcia.sfm.fragment;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -86,8 +89,13 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback {
                     Bitmap original = BitmapFactory.decodeByteArray(data , 0, data.length);
                     Bitmap resized = Bitmap.createScaledBitmap(original, 360, 240, true);
 
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(90);
+                    Bitmap rotatedBitmap = Bitmap.createBitmap(resized, 0, 0, resized.getWidth(), resized.getHeight(), matrix, true);
+
+
                     ByteArrayOutputStream blob = new ByteArrayOutputStream();
-                    resized.compress(Bitmap.CompressFormat.PNG, 0, blob);
+                    rotatedBitmap.compress(Bitmap.CompressFormat.PNG, 0, blob);
 
                     try {
                         String path = Environment.getExternalStorageDirectory() +
@@ -122,6 +130,16 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback {
                         outStream.write(blob.toByteArray());
                         outStream.close();
                         Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
+
+                        MediaScannerConnection.scanFile(getContext(),
+                                new String[] { dir.toString() }, null,
+                                new MediaScannerConnection.OnScanCompletedListener() {
+                                    @Override
+                                    public void onScanCompleted(String s, Uri uri) {
+                                        Log.i("ExternalStorage", "Scanned");
+                                        Log.i("ExternalStorage", "-> uri=" + uri);
+                                    }
+                                });
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
