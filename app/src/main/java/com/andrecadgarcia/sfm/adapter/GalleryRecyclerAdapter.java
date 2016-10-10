@@ -3,6 +3,9 @@ package com.andrecadgarcia.sfm.adapter;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.andrecadgarcia.sfm.Feature3D;
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
 import com.andrecadgarcia.sfm.ExampleMultiviewSceneReconstruction;
@@ -59,6 +63,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         public ViewHolder(View v) {
             super(v);
             mTextView = ((TextView) v.findViewById(R.id.tv_folder_title));
+            mImageView = ((ImageView) v.findViewById(R.id.iv_gallery));
         }
     }
 
@@ -128,6 +133,27 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     @Override
     public void onBindViewHolder(GalleryRecyclerAdapter.ViewHolder holder, int position) {
         holder.mTextView.setText(mDataset.get(position));
+
+        String path = Environment.getExternalStorageDirectory() + File.separator + "SFM" +
+                File.separator + "Media" + File.separator;
+
+        if (this.showingPNG) {
+            path += "Pictures" + File.separator + mDataset.get(position) + File.separator + "0.png";
+        }
+        else {
+            path += "Models" + File.separator + mDataset.get(position) + File.separator + ".png";
+        }
+
+        Bitmap ThumbImage;
+
+        ThumbImage = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path),
+                64, 64);
+
+        if (ThumbImage == null) {
+            ThumbImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.model_default);
+        }
+
+        holder.mImageView.setImageBitmap(ThumbImage);
     }
 
     @Override
@@ -135,7 +161,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         return mDataset.size();
     }
 
-    private class ExecuteSFM extends AsyncTask<String, Void, String> {
+    private class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
 
         long before, after;
         AlertDialog alert;
@@ -156,7 +182,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         }
 
         @Override
-        protected String doInBackground(String... urls) {
+        protected List<Feature3D> doInBackground(String... urls) {
 
             example = new ExampleMultiviewSceneReconstruction();
             return example.process(intrinsic, pictures, context);
@@ -164,56 +190,112 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(List<Feature3D> result) {
 
             alert.dismiss();
             after = System.currentTimeMillis();
+
             System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
-            FileOutputStream outStream = null;
-            OutputStreamWriter myOutWriter = null;
-            try {
-                String path = Environment.getExternalStorageDirectory() +
-                        File.separator + "SFM";
-                File dir = new File(path);
-                if(!dir.exists()){
-                    dir.mkdir();
-                    Log.d("Log", "onDirCreated");
-                }
-                path += File.separator + "Media";
-                dir = new File(path);
-                if(!dir.exists()){
-                    dir.mkdir();
-                    Log.d("Log", "onDirCreated");
-                }
-                path += File.separator + "Models";
-                dir = new File(path);
-                if(!dir.exists()){
-                    dir.mkdir();
-                    Log.d("Log", "onDirCreated");
-                }
-                path += File.separator + String.valueOf(System.currentTimeMillis()) + ".obj";
+            Log.d("Log", "onPictureTaken - wrote bytes: " + result.size());
 
-                dir = new File(path);
-                outStream = new FileOutputStream(dir);
-                myOutWriter = new OutputStreamWriter(outStream);
-                myOutWriter.append(result);
-                myOutWriter.close();
+            String points = "";
 
-                outStream.flush();
-                outStream.close();
-                Log.d("Log", "onPictureTaken - wrote bytes: " + result.length());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
+            for (Feature3D p : result) {
+                points += "v " + p.worldPt.x + " " + p.worldPt.y + " " + p.worldPt.z + "\n";
             }
 
+            createObjs(result, points);
 
             ((MainActivity) context).setProcessingSFM(false);
-            ((MainActivity) context).setResult(result);
+            ((MainActivity) context).setResult(points);
             ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
 
         }
+    }
+
+
+    public void createObjs(List<Feature3D> cloud, String vertices) {
+
+        FileOutputStream outStream = null;
+        OutputStreamWriter myOutWriter = null;
+
+        try {
+            String basePath = Environment.getExternalStorageDirectory() +
+                    File.separator + "SFM";
+            File dir = new File(basePath);
+            if(!dir.exists()){
+                dir.mkdir();
+                Log.d("Log", "onDirCreated");
+            }
+            basePath += File.separator + "Media";
+            dir = new File(basePath);
+            if(!dir.exists()){
+                dir.mkdir();
+                Log.d("Log", "onDirCreated");
+            }
+            basePath += File.separator + "Models";
+            dir = new File(basePath);
+            if(!dir.exists()){
+                dir.mkdir();
+                Log.d("Log", "onDirCreated");
+            }
+            basePath += File.separator + String.valueOf(System.currentTimeMillis());
+            dir = new File(basePath);
+            if(!dir.exists()){
+                dir.mkdir();
+                Log.d("Log", "onDirCreated");
+            }
+
+            String points = getPoints(cloud, vertices);
+            String sequential = getSequential(cloud, vertices);
+            String allToAll = getAllToAll(cloud, vertices);
+
+            String filePath;
+
+            filePath = basePath + File.separator + "points.obj";
+            dir = new File(filePath);
+            outStream = new FileOutputStream(dir);
+            myOutWriter = new OutputStreamWriter(outStream);
+            myOutWriter.append(points);
+            myOutWriter.close();
+
+            filePath = basePath + File.separator + "sequential.obj";
+            dir = new File(filePath);
+            outStream = new FileOutputStream(dir);
+            myOutWriter = new OutputStreamWriter(outStream);
+            myOutWriter.append(sequential);
+            myOutWriter.close();
+
+            filePath = basePath + File.separator + "allToAll.obj";
+            dir = new File(filePath);
+            outStream = new FileOutputStream(dir);
+            myOutWriter = new OutputStreamWriter(outStream);
+            myOutWriter.append(allToAll);
+            myOutWriter.close();
+
+            outStream.flush();
+            outStream.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+        }
+    }
+
+    public String getPoints(List<Feature3D> cloud, String vertices) {
+        String result = vertices;
+        return result;
+    }
+
+    public String getSequential(List<Feature3D> cloud, String vertices) {
+        String result = vertices;
+        return result;
+    }
+
+    public String getAllToAll(List<Feature3D> cloud, String vertices) {
+        String result = vertices;
+        return result;
     }
 }

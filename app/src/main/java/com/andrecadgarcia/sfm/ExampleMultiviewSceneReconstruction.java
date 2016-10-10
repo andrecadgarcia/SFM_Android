@@ -124,7 +124,7 @@ public class ExampleMultiviewSceneReconstruction {
      * Process the images and reconstructor the scene as a point cloud using matching interest points between
      * images.
      */
-    public String process(IntrinsicParameters intrinsic, List<String> colorImages, Context context) {
+    public List<Feature3D> process(IntrinsicParameters intrinsic, List<String> colorImages, Context context) {
 
         featuresAll = new ArrayList<>();
         opt.inPreferredConfig = Bitmap.Config.RGB_565;
@@ -163,7 +163,7 @@ public class ExampleMultiviewSceneReconstruction {
 
         // display a point cloud from the 3D features
         //PointCloudViewer gui = new PointCloudViewer(intrinsic, 1);
-
+        /*
         FastQueue<ColorPoint3D> cloud = new FastQueue<ColorPoint3D>(200,ColorPoint3D.class,true);
 
         for (Feature3D t : featuresAll) {
@@ -171,20 +171,59 @@ public class ExampleMultiviewSceneReconstruction {
             ColorPoint3D p = cloud.grow();
             p.set(t.worldPt.x, t.worldPt.y, t.worldPt.z);
             p.rgb = t.color;
-            result += "v ";
-            result += t.worldPt.x + " " + t.worldPt.y + " " + t.worldPt.z;
-            result += '\n';
+            for (int i = 0; i < 8; i++) {
+                result += "v ";
+                result += (t.worldPt.x + (((i % 2) == 0) ? 0.005 : -0.005)) + " " + (t.worldPt.y + (((i > 1) && (i < 5)) ? 0.005 : -0.005)) + " " + (t.worldPt.z + ((i < 4) ? 0.005 : -0.005));
+                result += '\n';
+            }
             System.out.println("x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color);
 
         }
 
-        for(int i = 0 ; i <= featuresAll.size(); i++) {
-            result += "f ";
-            result += ((i % (featuresAll.size())) + 1) + " " + (((i + 1) % (featuresAll.size())) + 1) + " " + (((i + 2) % (featuresAll.size())) + 1);
-            result += '\n';
-            result += "f ";
-            result += (((i + 2)  % (featuresAll.size())) + 1) + " " + (((i + 1) % (featuresAll.size())) + 1) + " " + ((i % (featuresAll.size())) + 1);
-            result += '\n';
+        int index = -1;
+        for (Feature3D t : featuresAll) {
+            index++;
+            for (int i = index; i < (index + 12); i++) {
+
+                int start = (i * 8) + 1;
+
+                result += "f ";
+                result += (start + 0) + " " + (start + 1) + " " + (start + 2);
+                result += '\n';
+                result += "f ";
+                result += (start + 2) + " " + (start + 1) + " " + (start + 3);
+                result += '\n';
+                result += "f ";
+                result += (start + 2) + " " + (start + 3) + " " + (start + 4);
+                result += '\n';
+                result += "f ";
+                result += (start + 4) + " " + (start + 3) + " " + (start + 5);
+                result += '\n';
+                result += "f ";
+                result += (start + 4) + " " + (start + 5) + " " + (start + 6);
+                result += '\n';
+                result += "f ";
+                result += (start + 6) + " " + (start + 5) + " " + (start + 7);
+                result += '\n';
+                result += "f ";
+                result += (start + 6) + " " + (start + 7) + " " + (start + 0);
+                result += '\n';
+                result += "f ";
+                result += (start + 0) + " " + (start + 7) + " " + (start + 1);
+                result += '\n';
+                result += "f ";
+                result += (start + 1) + " " + (start + 7) + " " + (start + 3);
+                result += '\n';
+                result += "f ";
+                result += (start + 3) + " " + (start + 7) + " " + (start + 5);
+                result += '\n';
+                result += "f ";
+                result += (start + 6) + " " + (start + 0) + " " + (start + 4);
+                result += '\n';
+                result += "f ";
+                result += (start + 4) + " " + (start + 0) + " " + (start + 2);
+                result += '\n';
+            }
         }
 
 
@@ -193,6 +232,8 @@ public class ExampleMultiviewSceneReconstruction {
         return result;
         //gui.setPreferredSize(new Dimension(500, 500));
         //ShowImages.showWindow(gui, "Points");
+        */
+        return featuresAll;
     }
 
     /**
@@ -647,16 +688,5 @@ public class ExampleMultiviewSceneReconstruction {
         for (Feature3D t : features) {
             t.worldPt.timesIP(scale);
         }
-    }
-
-    public static class Feature3D {
-        // color of the pixel first found int
-        int color;
-        // estimate 3D position of the feature
-        Point3D_F64 worldPt = new Point3D_F64();
-        // observations in each frame that it's visible
-        FastQueue<Point2D_F64> obs = new FastQueue<Point2D_F64>(Point2D_F64.class, true);
-        // index of each frame its visible in
-        GrowQueue_I32 frame = new GrowQueue_I32();
     }
 }
