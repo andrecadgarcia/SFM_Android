@@ -6,4 +6,10 @@
     <string name="menu_item_title3">Camera Calibration</string>
     <string name="menu_item_title4">Gallery</string>
 
+    <string-array name="objs_array">
+        <item>Points</item>
+        <item>Sequential</item>
+        <item>All to All</item>
+    </string-array>
+
 </resources>
