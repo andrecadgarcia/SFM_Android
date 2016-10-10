@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.view.MotionEvent;
 
+import org.rajawali3d.Camera;
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;
 import org.rajawali3d.loader.LoaderOBJ;
@@ -25,12 +26,17 @@ public class Renderer extends RajawaliRenderer {
 
     private DirectionalLight directionalLight;
     private Object3D object;
+    private String path;
+
+    private boolean rotate;
 
     public Renderer(Context context, String path) {
         super(context);
         this.context = context;
         setFrameRate(60);
-        object = getObject(path);
+        this.path = path;
+        this.rotate = false;
+        //object = getObject(path);
     }
 
     @Override
@@ -39,26 +45,18 @@ public class Renderer extends RajawaliRenderer {
         directionalLight.setColor(1.0f, 1.0f, 1.0f);
         directionalLight.setPower(2);
         getCurrentScene().addLight(directionalLight);
-
-        Material material = new Material();
-        material.enableLighting(true);
-        material.setDiffuseMethod(new DiffuseMethod.Lambert());
-
-        object.setMaterial(material);
-        object.setColor(Color.BLUE);
-
-        getCurrentScene().addChild(object);
-
-        getCurrentCamera().setLookAt(object.getLookAt());
-
         getCurrentScene().setBackgroundColor(Color.rgb(255,255,255));
+
+        addObject(this.path);
     }
 
     @Override
     public void onRender(final long elapsedTime, final double deltaTime) {
         super.onRender(elapsedTime, deltaTime);
-        object.rotate(Vector3.Axis.Y, 1.0);
-        //getCurrentCamera().rotate(Vector3.Axis.X, 0.5);
+        if (rotate) {
+            object.setRotation(Vector3.Axis.Y, 0.5);
+        }
+        //getCurrentCamera().rotateAround(Vector3.getAxisVector(Vector3.Axis.Y), 0.5);
     }
 
     @Override
@@ -122,9 +120,19 @@ public class Renderer extends RajawaliRenderer {
         object.setMaterial(material);
         object.setColor(Color.BLUE);
 
+
         getCurrentScene().addChild(object);
 
-        getCurrentCamera().setLookAt(object.getLookAt());
+        //object.setPosition(object.getScaleX()/2, object.getScaleY()/2, object.getScaleZ()/2);
 
+        //getCurrentCamera().setZ(object.getZ() );
+
+        getCurrentCamera().setLookAt(-500,100,-100);
+        getCurrentCamera().setX(25);
+        getCurrentCamera().setZ(10);
+    }
+
+    public void setRotation(boolean rotate) {
+        this.rotate = rotate;
     }
 }
