@@ -1,6 +1,7 @@
 package com.andrecadgarcia.sfm.fragment;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,11 +11,14 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.Renderer;
 
 import org.rajawali3d.surface.RajawaliSurfaceView;
+
+import java.io.File;
 
 /**
  * Created by Andre Garcia on 04/10/16.
@@ -31,7 +35,10 @@ public class ModelViewerFragment extends Fragment {
     private CheckBox rotation;
     private Spinner objs;
 
-    private String path;
+    private String file;
+    private String folder;
+
+    private String fullPath;
 
     public ModelViewerFragment() {
         // Required empty public constructor
@@ -46,7 +53,7 @@ public class ModelViewerFragment extends Fragment {
             rootview = inflater.inflate(R.layout.fragment_model_viewer, container, false);
 
             surface = (RajawaliSurfaceView) rootview.findViewById(R.id.rajwali_surface);
-            renderer = new Renderer(getContext(), this.path);
+            renderer = new Renderer(getContext(), this.fullPath);
             surface.setSurfaceRenderer(renderer);
 
             x = (SeekBar) rootview.findViewById(R.id.sk_x);
@@ -116,13 +123,16 @@ public class ModelViewerFragment extends Fragment {
                 public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                     switch (i) {
                         case 0:
-
-                             break;
+                            setModel("sequential.obj");
+                            surface.invalidate();
+                            break;
                         case 1:
-
+                            setModel("points.obj");
+                            surface.invalidate();
                             break;
                         case 2:
-
+                            setModel("allToAll.obj");
+                            surface.invalidate();
                             break;
                     }
                 }
@@ -146,11 +156,19 @@ public class ModelViewerFragment extends Fragment {
         return rootview;
     }
 
-    public void setModel(String path) {
-        this.path = path;
+    public void setFolder(String name) {
+        this.folder = name;
+    }
+
+    public void setModel(String file) {
+
+        this.file = file;
+        this.fullPath = Environment.getExternalStorageDirectory() + File.separator + "SFM" +
+                File.separator + "Media" + File.separator + "Models" + File.separator + folder + File.separator + file;
+
         if(renderer != null) {
             renderer.clean();
-            renderer.addObject(this.path);
+            renderer.addObject(fullPath);
         }
     }
 

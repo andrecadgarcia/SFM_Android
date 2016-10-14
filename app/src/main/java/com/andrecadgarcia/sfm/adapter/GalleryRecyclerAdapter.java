@@ -48,6 +48,8 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
 
     private boolean showingPNG = true;
 
+    private ExecuteSFM sfm;
+
     ExampleMultiviewSceneReconstruction example;
     IntrinsicParameters intrinsic;
 
@@ -108,15 +110,15 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                                 .create().show();
                     }
                     else {
-                        ExecuteSFM sfm = new ExecuteSFM();
+                        sfm = new ExecuteSFM();
                         sfm.execute();
                     }
 
                 }
                 else {
                     ModelViewerFragment viewer = (ModelViewerFragment)((MainActivity) context).getClass(MainActivity.MODELVIEWER_FRAGMENT);
-                    viewer.setModel(Environment.getExternalStorageDirectory() + File.separator + "SFM" +
-                            File.separator + "Media" + File.separator + "Models" + File.separator + ((TextView) v.findViewById(R.id.tv_folder_title)).getText());
+                    viewer.setFolder(((TextView) v.findViewById(R.id.tv_folder_title)).getText() + "");
+                    viewer.setModel("sequential.obj");
 ;                   ((MainActivity) context).fragmentTransaction(MainActivity.MODELVIEWER_FRAGMENT);
                 }
             }
@@ -176,6 +178,13 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                     .setTitle("SFM Reconstruction")
                     .setMessage("This may take a while.")
                     .setCancelable(false)
+                    .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                            sfm.cancel(true);
+                        }
+                    })
                     .create();
             alert.show();
 
@@ -185,31 +194,39 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         protected List<Feature3D> doInBackground(String... urls) {
 
             example = new ExampleMultiviewSceneReconstruction();
-            return example.process(intrinsic, pictures, context);
+            if (!isCancelled()) {
+                return example.process(intrinsic, pictures, context);
+            }
+            else {
+                return null;
+            }
 
         }
 
         @Override
         protected void onPostExecute(List<Feature3D> result) {
 
-            alert.dismiss();
-            after = System.currentTimeMillis();
+            if (result != null) {
+                after = System.currentTimeMillis();
 
-            System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
-            Log.d("Log", "onPictureTaken - wrote bytes: " + result.size());
+                System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
+                Log.d("Log", "onPictureTaken - wrote bytes: " + result.size());
 
-            String points = "";
+                String points = "";
 
-            for (Feature3D p : result) {
-                points += "v " + p.worldPt.x + " " + p.worldPt.y + " " + p.worldPt.z + "\n";
+                for (Feature3D p : result) {
+                    points += "v " + p.worldPt.x + " " + p.worldPt.y + " " + p.worldPt.z + "\n";
+                }
+
+                createObjs(result, points);
+
+                alert.dismiss();
+
+                ((MainActivity) context).setProcessingSFM(false);
+                ((MainActivity) context).setResult(points);
+                ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
+
             }
-
-            createObjs(result, points);
-
-            ((MainActivity) context).setProcessingSFM(false);
-            ((MainActivity) context).setResult(points);
-            ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
-
         }
     }
 
@@ -246,11 +263,16 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                 Log.d("Log", "onDirCreated");
             }
 
+            System.out.printf("Point cloud size: " + cloud.size());
+            System.out.println("Getting point cloud");
             String points = getPoints(cloud, vertices);
+            System.out.println("Getting sequential");
             String sequential = getSequential(cloud, vertices);
             String allToAll = getAllToAll(cloud, vertices);
 
             String filePath;
+
+            System.out.println("Saving");
 
             filePath = basePath + File.separator + "points.obj";
             dir = new File(filePath);
@@ -266,12 +288,14 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
             myOutWriter.append(sequential);
             myOutWriter.close();
 
+
             filePath = basePath + File.separator + "allToAll.obj";
             dir = new File(filePath);
             outStream = new FileOutputStream(dir);
             myOutWriter = new OutputStreamWriter(outStream);
             myOutWriter.append(allToAll);
             myOutWriter.close();
+
 
             outStream.flush();
             outStream.close();
@@ -285,17 +309,97 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     }
 
     public String getPoints(List<Feature3D> cloud, String vertices) {
-        String result = vertices;
+        String result = "";
+
+        for (Feature3D point : cloud) {
+            for (int i = 0; i < 8; i++) {
+                result += "v ";
+                result += (point.worldPt.x + (((i % 2) == 0) ? 0.05 : -0.05)) + " " + (point.worldPt.y + (((i > 1) && (i < 5)) ? 0.05 : -0.05)) + " " + (point.worldPt.z + ((i < 4) ? 0.05 : -0.05));
+                result += '\n';
+            }
+        }
+
+        int index = -1;
+        for (Feature3D point : cloud) {
+            index++;
+            int start = (index * 8) + 1;
+
+            result += "f ";
+            result += (start + 0) + " " + (start + 1) + " " + (start + 2);
+            result += '\n';
+            result += "f ";
+            result += (start + 2) + " " + (start + 1) + " " + (start + 3);
+            result += '\n';
+            result += "f ";
+            result += (start + 2) + " " + (start + 3) + " " + (start + 4);
+            result += '\n';
+            result += "f ";
+            result += (start + 4) + " " + (start + 3) + " " + (start + 5);
+            result += '\n';
+            result += "f ";
+            result += (start + 4) + " " + (start + 5) + " " + (start + 6);
+            result += '\n';
+            result += "f ";
+            result += (start + 6) + " " + (start + 5) + " " + (start + 7);
+            result += '\n';
+            result += "f ";
+            result += (start + 6) + " " + (start + 7) + " " + (start + 0);
+            result += '\n';
+            result += "f ";
+            result += (start + 0) + " " + (start + 7) + " " + (start + 1);
+            result += '\n';
+            result += "f ";
+            result += (start + 1) + " " + (start + 7) + " " + (start + 3);
+            result += '\n';
+            result += "f ";
+            result += (start + 3) + " " + (start + 7) + " " + (start + 5);
+            result += '\n';
+            result += "f ";
+            result += (start + 6) + " " + (start + 0) + " " + (start + 4);
+            result += '\n';
+            result += "f ";
+            result += (start + 4) + " " + (start + 0) + " " + (start + 2);
+            result += '\n';
+        }
+
+
         return result;
     }
 
     public String getSequential(List<Feature3D> cloud, String vertices) {
         String result = vertices;
+        result += "\n";
+
+        for(int i = 0 ; i <= cloud.size(); i++) {
+            result += "f ";
+            result += ((i % (cloud.size())) + 1) + " " + (((i + 1) % (cloud.size())) + 1) + " " + (((i + 2) % (cloud.size())) + 1);
+            result += '\n';
+            result += "f ";
+            result += (((i + 2)  % (cloud.size())) + 1) + " " + (((i + 1) % (cloud.size())) + 1) + " " + ((i % (cloud.size())) + 1);
+            result += '\n';
+        }
+
+
+
         return result;
     }
 
     public String getAllToAll(List<Feature3D> cloud, String vertices) {
         String result = vertices;
+        result += "\n";
+
+        for (int i = 1; i <= cloud.size(); i++) {
+            for (int j = 1; j <= cloud.size(); j++) {
+                result += "f ";
+                result += 1 + " " + i + " " + j;
+                result += '\n';
+                result += "f ";
+                result += j + " " + i + " " + 1;
+                result += '\n';
+            }
+        }
+
+
         return result;
     }
 }

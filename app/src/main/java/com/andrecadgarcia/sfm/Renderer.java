@@ -1,8 +1,12 @@
 package com.andrecadgarcia.sfm;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.view.MotionEvent;
+
+import com.andrecadgarcia.sfm.activity.MainActivity;
 
 import org.rajawali3d.Camera;
 import org.rajawali3d.Object3D;
@@ -92,8 +96,18 @@ public class Renderer extends RajawaliRenderer {
             parser = new LoaderOBJ(this, object);
 
             parser.parse();
-        } catch (ParsingException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            final AlertDialog alert = new AlertDialog.Builder(context)
+                    .setTitle("Error")
+                    .setMessage(e.getMessage())
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            ((MainActivity) context).fragmentTransaction(MainActivity.GALLERY_FRAGMENT);
+                        }
+                    })
+                    .create();
+             alert.show();
         }
 
         return parser.getParsedObject();
@@ -107,8 +121,18 @@ public class Renderer extends RajawaliRenderer {
             parser = new LoaderOBJ(this, object);
 
             parser.parse();
-        } catch (ParsingException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            final AlertDialog alert = new AlertDialog.Builder(context)
+                    .setTitle("Error")
+                    .setMessage(e.getMessage())
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            ((MainActivity) context).fragmentTransaction(MainActivity.GALLERY_FRAGMENT);
+                        }
+                    })
+                    .create();
+            alert.show();
         }
 
         Material material = new Material();
