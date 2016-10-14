@@ -15,6 +15,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 
 import com.andrecadgarcia.sfm.R;
@@ -153,6 +156,12 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback {
             capture.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    final Animation animation = new AlphaAnimation(0.5f, 0.5f);
+                    animation.setDuration(100);
+                    animation.setInterpolator(new LinearInterpolator());
+                    animation.setRepeatCount(1);
+                    animation.setRepeatMode(Animation.REVERSE);
+                    mSurfaceView.startAnimation(animation);
                     captureImage();
                 }
             });
