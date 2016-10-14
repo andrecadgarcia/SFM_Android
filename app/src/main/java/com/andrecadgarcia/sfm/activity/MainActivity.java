@@ -149,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         } catch (Exception e) {
-            Toast.makeText(this, "Em Desenvolvimento... :D", Toast.LENGTH_LONG).show();
+            System.out.println(e.getMessage());
+            //Toast.makeText(this, "Em Desenvolvimento... :D", Toast.LENGTH_LONG).show();
         }
     }
 

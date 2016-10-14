@@ -11,10 +11,9 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.andrecadgarcia.sfm.R;
-import com.andrecadgarcia.sfm.Renderer;
+import com.andrecadgarcia.sfm.model3D.Renderer;
 
 import org.rajawali3d.surface.RajawaliSurfaceView;
 

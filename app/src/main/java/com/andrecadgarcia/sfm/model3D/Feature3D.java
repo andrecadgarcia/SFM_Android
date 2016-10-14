@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm;
+package com.andrecadgarcia.sfm.model3D;
 
 import org.ddogleg.struct.FastQueue;
 import org.ddogleg.struct.GrowQueue_I32;

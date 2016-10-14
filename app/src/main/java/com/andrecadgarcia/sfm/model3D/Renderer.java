@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm;
+package com.andrecadgarcia.sfm.model3D;
 
 import android.app.AlertDialog;
 import android.content.Context;

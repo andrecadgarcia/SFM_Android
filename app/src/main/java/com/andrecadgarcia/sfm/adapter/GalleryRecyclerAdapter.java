@@ -16,10 +16,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.andrecadgarcia.sfm.Feature3D;
+import com.andrecadgarcia.sfm.model3D.Feature3D;
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
-import com.andrecadgarcia.sfm.ExampleMultiviewSceneReconstruction;
+import com.andrecadgarcia.sfm.model3D.StructureFromMotion;
 import com.andrecadgarcia.sfm.fragment.ModelViewerFragment;
 
 import org.rajawali3d.renderer.RajawaliRenderer;
@@ -50,7 +50,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
 
     private ExecuteSFM sfm;
 
-    ExampleMultiviewSceneReconstruction example;
+    StructureFromMotion example;
     IntrinsicParameters intrinsic;
 
     RajawaliRenderer renderer;
@@ -193,7 +193,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         @Override
         protected List<Feature3D> doInBackground(String... urls) {
 
-            example = new ExampleMultiviewSceneReconstruction();
+            example = new StructureFromMotion();
             if (!isCancelled()) {
                 return example.process(intrinsic, pictures, context);
             }

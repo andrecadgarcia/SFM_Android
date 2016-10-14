@@ -1,4 +1,4 @@
-package com.andrecadgarcia.sfm;
+package com.andrecadgarcia.sfm.model3D;
 
 /*
  * Copyright (c) 2011-2016, Peter Abeles. All Rights Reserved.
@@ -31,7 +31,6 @@ import boofcv.alg.distort.LensDistortionOps;
 import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.factory.geo.*;
-import boofcv.gui.d3.ColorPoint3D;
 import boofcv.struct.calib.IntrinsicParameters;
 import boofcv.struct.distort.PointTransform_F64;
 import boofcv.struct.feature.AssociatedIndex;
@@ -70,7 +69,7 @@ import java.util.List;
  *
  * @author Peter Abeles
  */
-public class ExampleMultiviewSceneReconstruction {
+public class StructureFromMotion {
 
     // Converts a point from pixel to normalized image coordinates
     PointTransform_F64 pixelToNorm;
@@ -158,81 +157,6 @@ public class ExampleMultiviewSceneReconstruction {
         seed.add(bestImage);
         performReconstruction(seed, -1, matrix);
 
-        // Bundle adjustment would normally be done at this point, but has been omitted since the current
-        // implementation is too slow for a large number of points
-
-        // display a point cloud from the 3D features
-        //PointCloudViewer gui = new PointCloudViewer(intrinsic, 1);
-        /*
-        FastQueue<ColorPoint3D> cloud = new FastQueue<ColorPoint3D>(200,ColorPoint3D.class,true);
-
-        for (Feature3D t : featuresAll) {
-            //gui.addPoint(t.worldPt.x, t.worldPt.y, t.worldPt.z, t.color)
-            ColorPoint3D p = cloud.grow();
-            p.set(t.worldPt.x, t.worldPt.y, t.worldPt.z);
-            p.rgb = t.color;
-            for (int i = 0; i < 8; i++) {
-                result += "v ";
-                result += (t.worldPt.x + (((i % 2) == 0) ? 0.005 : -0.005)) + " " + (t.worldPt.y + (((i > 1) && (i < 5)) ? 0.005 : -0.005)) + " " + (t.worldPt.z + ((i < 4) ? 0.005 : -0.005));
-                result += '\n';
-            }
-            System.out.println("x:" + t.worldPt.x + " y:" + t.worldPt.y + " z:" + t.worldPt.z + " - color:" +  t.color);
-
-        }
-
-        int index = -1;
-        for (Feature3D t : featuresAll) {
-            index++;
-            for (int i = index; i < (index + 12); i++) {
-
-                int start = (i * 8) + 1;
-
-                result += "f ";
-                result += (start + 0) + " " + (start + 1) + " " + (start + 2);
-                result += '\n';
-                result += "f ";
-                result += (start + 2) + " " + (start + 1) + " " + (start + 3);
-                result += '\n';
-                result += "f ";
-                result += (start + 2) + " " + (start + 3) + " " + (start + 4);
-                result += '\n';
-                result += "f ";
-                result += (start + 4) + " " + (start + 3) + " " + (start + 5);
-                result += '\n';
-                result += "f ";
-                result += (start + 4) + " " + (start + 5) + " " + (start + 6);
-                result += '\n';
-                result += "f ";
-                result += (start + 6) + " " + (start + 5) + " " + (start + 7);
-                result += '\n';
-                result += "f ";
-                result += (start + 6) + " " + (start + 7) + " " + (start + 0);
-                result += '\n';
-                result += "f ";
-                result += (start + 0) + " " + (start + 7) + " " + (start + 1);
-                result += '\n';
-                result += "f ";
-                result += (start + 1) + " " + (start + 7) + " " + (start + 3);
-                result += '\n';
-                result += "f ";
-                result += (start + 3) + " " + (start + 7) + " " + (start + 5);
-                result += '\n';
-                result += "f ";
-                result += (start + 6) + " " + (start + 0) + " " + (start + 4);
-                result += '\n';
-                result += "f ";
-                result += (start + 4) + " " + (start + 0) + " " + (start + 2);
-                result += '\n';
-            }
-        }
-
-
-        System.out.println("Finish");
-
-        return result;
-        //gui.setPreferredSize(new Dimension(500, 500));
-        //ShowImages.showWindow(gui, "Points");
-        */
         return featuresAll;
     }
 
@@ -358,8 +282,6 @@ public class ExampleMultiviewSceneReconstruction {
                                 GrowQueue_I32 colors) {
 
         GrayF32 image = ConvertBitmap.bitmapToGray(colorImage, (GrayF32) null, null);
-
-        //GrayF32 image = ConvertBufferedImage.convertFrom(colorImage, (GrayF32) null);
 
         features.reset();
         pixels.reset();
