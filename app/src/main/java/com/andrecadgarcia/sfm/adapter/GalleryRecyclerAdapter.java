@@ -64,6 +64,14 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     private NotificationCompat.Builder mBuilder;
     int id = 1;
 
+    long before, after;
+    long before_sfm, after_sfm;
+    long before_points, after_points;
+    long before_sequential, after_sequential;
+    long before_alltoall, after_alltoall;
+
+    double elapsed = 0;
+
     private static final String ASSETS_TARGET_DIRECTORY = Environment.getExternalStorageDirectory() + File.separator
             + "SFM" + File.separator + "Media" + File.separator + "Models" + File.separator;
 
@@ -100,14 +108,47 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         this.progress.dismiss();
         mBuilder.setProgress(0, 0, false);
         mBuilder.setContentTitle("Reconstruction Complete");
+
+        after_alltoall = System.currentTimeMillis();
+        after = System.currentTimeMillis();
+        elapsed = (after - before) / 1000.0;
+        System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
     }
 
     public void addStep() {
+
         this.steps++;
+
+        switch (this.steps) {
+            case 1:
+                before_sfm = System.currentTimeMillis();
+                break;
+            case 2:
+                after_sfm = System.currentTimeMillis();
+                before_points = System.currentTimeMillis();
+                break;
+            case 3:
+                after_points = System.currentTimeMillis();
+                before_sequential = System.currentTimeMillis();
+                break;
+            case 4:
+                after_sequential = System.currentTimeMillis();
+                before_alltoall = System.currentTimeMillis();
+                break;
+        }
     }
 
     public int getSteps() {
         return this.steps;
+    }
+
+    public String getElapsed() {
+        return  "\nSFM Reconstruction: " + (after_sfm - before_sfm) / 1000.0 + " s\n" +
+                "Point Cloud: " + (after_points - before_points) / 1000.0 + " s\n" +
+                "Sequential: " + (after_sequential - before_sequential) / 1000.0 + " s\n" +
+                "All to All: " + (after_alltoall - before_alltoall) / 1000.0 + " s\n\n" +
+                "Elapsed Time: " + (after - before) / 1000.0 + " s\n\n";
+
     }
 
     @Override
@@ -154,6 +195,8 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                         progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                         progress.setMax(100);
                         progress.show();
+
+                        before = System.currentTimeMillis();
 
                         mNotifyManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                         mBuilder = new NotificationCompat.Builder(context);

@@ -22,8 +22,6 @@ import java.util.List;
 
 public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
 
-    long before, after;
-
     FileOutputStream outStream = null;
     OutputStreamWriter myOutWriter = null;
 
@@ -47,7 +45,6 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
     protected void onPreExecute() {
         super.onPreExecute();
 
-        before = System.currentTimeMillis();
         System.out.println("Getting sequential");
 
         this.adapter.addStep();
@@ -124,14 +121,11 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
                 e.printStackTrace();
             }
 
-            after = System.currentTimeMillis();
-            System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
-
             if (adapter.getSteps() == 4) {
                 adapter.dismissAlert();
 
                 ((MainActivity) context).setProcessingSFM(false);
-                ((MainActivity) context).setResult(vertices);
+                ((MainActivity) context).setResult(adapter.getElapsed() + vertices);
                 ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
             }
             else {

@@ -23,7 +23,6 @@ import boofcv.struct.calib.IntrinsicParameters;
 
 public class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
 
-    long before, after;
     GalleryRecyclerAdapter adapter;
     IntrinsicParameters intrinsic;
     List<String> pictures;
@@ -41,7 +40,6 @@ public class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        before = System.currentTimeMillis();
         adapter.addStep();
         adapter.setMessages("SFM Reconstruction (1/4)");
         adapter.setProgress(0);
@@ -63,9 +61,7 @@ public class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
     protected void onPostExecute(List<Feature3D> result) {
 
         if (result != null) {
-            after = System.currentTimeMillis();
 
-            System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
             Log.d("Log", "onPictureTaken - wrote bytes: " + result.size());
 
             String points = "";
