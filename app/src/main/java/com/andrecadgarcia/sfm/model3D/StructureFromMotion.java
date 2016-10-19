@@ -18,10 +18,14 @@ package com.andrecadgarcia.sfm.model3D;
  * limitations under the License.
  */
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
+import android.widget.TextView;
+
+import com.andrecadgarcia.sfm.adapter.GalleryRecyclerAdapter;
 
 import boofcv.abst.feature.associate.AssociateDescription;
 import boofcv.abst.feature.associate.ScoreAssociation;
@@ -119,11 +123,18 @@ public class StructureFromMotion {
 
     String result = "";
 
+    GalleryRecyclerAdapter adapter;
+
+    int progress = 0;
+    int recon_steps = 0;
+
     /**
      * Process the images and reconstructor the scene as a point cloud using matching interest points between
      * images.
      */
-    public List<Feature3D> process(IntrinsicParameters intrinsic, List<String> colorImages, Context context) {
+    public List<Feature3D> process(IntrinsicParameters intrinsic, List<String> colorImages, Context context, GalleryRecyclerAdapter adapter) {
+
+        this.adapter = adapter;
 
         featuresAll = new ArrayList<>();
         opt.inPreferredConfig = Bitmap.Config.RGB_565;
@@ -174,9 +185,16 @@ public class StructureFromMotion {
         // declare stored for found motion of each image
         motionWorldToCamera = new Se3_F64[colorImages.size()];
         for (int i = 0; i < colorImages.size(); i++) {
+
+            progress = 40 + ((i*10)/colorImages.size());
+            adapter.setProgress(progress);
+
             motionWorldToCamera[i] = new Se3_F64();
             imageFeature3D.add(new ArrayList<Feature3D>());
         }
+
+        progress = 50;
+        adapter.setProgress(progress);
 
         // pick the image most similar to the original image to initialize pose estimation
         int firstChild = findBestFit(matrix, bestImage);
@@ -191,6 +209,10 @@ public class StructureFromMotion {
         int bestImage = -1;
         int bestCount = 0;
         for (int i = 0; i < colorImages.size(); i++) {
+
+            progress = 30 + ((i*10)/colorImages.size());
+            adapter.setProgress(progress);
+
             int count = 0;
             for (int j = 0; j < colorImages.size(); j++) {
                 if (matrix[i][j] > connectThreshold) {
@@ -203,6 +225,10 @@ public class StructureFromMotion {
                 bestImage = i;
             }
         }
+
+        progress = 40;
+        adapter.setProgress(progress);
+
         return bestImage;
     }
 
@@ -214,6 +240,10 @@ public class StructureFromMotion {
         Bitmap colorImage;
         File f;
         for (int i = 0; i < colorImages.size(); i++) {
+
+            progress = (i*10/colorImages.size());
+            adapter.setProgress(progress);
+
             System.out.print("*");
             f = new File(colorImages.get(i));
             try {
@@ -232,6 +262,10 @@ public class StructureFromMotion {
                 Log.d("","Open Image");
             }
         }
+
+        progress = 10;
+        adapter.setProgress(progress);
+
         System.out.println();
     }
 
@@ -242,6 +276,10 @@ public class StructureFromMotion {
         double matrix[][] = new double[imageVisualFeatures.size()][imageVisualFeatures.size()];
 
         for (int i = 0; i < imageVisualFeatures.size(); i++) {
+
+            progress = 10 + (i*10/imageVisualFeatures.size());
+            adapter.setProgress(progress);
+
             for (int j = i + 1; j < imageVisualFeatures.size(); j++) {
                 System.out.printf("Associated %02d %02d ", i, j);
                 associate.setSource(imageVisualFeatures.get(i));
@@ -254,6 +292,10 @@ public class StructureFromMotion {
                 System.out.println(" = " + matrix[i][j]);
             }
         }
+
+        progress = 20;
+        adapter.setProgress(progress);
+
         return matrix;
     }
 
@@ -262,6 +304,10 @@ public class StructureFromMotion {
      */
     private void printConnectionMatrix(double[][] matrix) {
         for (int i = 0; i < matrix.length; i++) {
+
+            progress = 20 + (i*10/imageVisualFeatures.size());
+            adapter.setProgress(progress);
+
             for (int j = 0; j < matrix.length; j++) {
                 if (matrix[i][j] >= connectThreshold) {
                     System.out.print("#");
@@ -272,6 +318,9 @@ public class StructureFromMotion {
             }
             System.out.println();
         }
+
+        progress = 30;
+        adapter.setProgress(progress);
     }
 
     /**
@@ -323,7 +372,6 @@ public class StructureFromMotion {
      */
     private void initialize(int imageA, int imageB) {
         System.out.println("Initializing 3D world using " + imageA + " and " + imageB);
-
         // Compute the 3D pose and find valid image features
         Se3_F64 motionAtoB = new Se3_F64();
         List<AssociatedIndex> inliers = new ArrayList<AssociatedIndex>();
@@ -384,7 +432,12 @@ public class StructureFromMotion {
         }
 
         for (int parent : parents) {
+
             for (int i = 0; i < estimatedImage.length; i++) {
+
+                progress = 50 + ((i * 50) / estimatedImage.length);
+                adapter.setProgress(progress);
+
                 // see if it is connected to the target and has not had its motion estimated
                 if (matrix[parent][i] > connectThreshold && !processedImage[i]) {
                     estimateMotionPnP(parent, i);
@@ -393,8 +446,9 @@ public class StructureFromMotion {
             }
         }
 
-        if (!children.isEmpty())
+        if (!children.isEmpty()) {
             performReconstruction(children, -1, matrix);
+        }
     }
 
     /**

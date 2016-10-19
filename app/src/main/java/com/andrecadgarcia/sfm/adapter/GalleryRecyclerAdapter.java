@@ -1,6 +1,8 @@
 package com.andrecadgarcia.sfm.adapter;
 
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
@@ -8,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.andrecadgarcia.sfm.async.ExecuteSFM;
 import com.andrecadgarcia.sfm.model3D.Feature3D;
 import com.andrecadgarcia.sfm.R;
 import com.andrecadgarcia.sfm.activity.MainActivity;
@@ -50,10 +54,15 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
 
     private ExecuteSFM sfm;
 
-    StructureFromMotion example;
     IntrinsicParameters intrinsic;
 
-    RajawaliRenderer renderer;
+    ProgressDialog progress;
+    GalleryRecyclerAdapter class_adapter = this;
+    int steps = 0;
+
+    private NotificationManager mNotifyManager;
+    private NotificationCompat.Builder mBuilder;
+    int id = 1;
 
     private static final String ASSETS_TARGET_DIRECTORY = Environment.getExternalStorageDirectory() + File.separator
             + "SFM" + File.separator + "Media" + File.separator + "Models" + File.separator;
@@ -74,6 +83,32 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         this.context = context;
     }
 
+    public void setProgress(int progress) {
+        this.progress.setProgress(progress);
+        // Displays the progress bar for the first time.
+        mBuilder.setProgress(100, progress, false);
+        mNotifyManager.notify(id, mBuilder.build());
+    }
+
+    public void setMessages(String message) {
+        this.progress.setMessage(message);
+        mBuilder.setContentTitle(message);
+        mNotifyManager.notify(id, mBuilder.build());
+    }
+
+    public void dismissAlert() {
+        this.progress.dismiss();
+        mBuilder.setProgress(0, 0, false);
+        mBuilder.setContentTitle("Reconstruction Complete");
+    }
+
+    public void addStep() {
+        this.steps++;
+    }
+
+    public int getSteps() {
+        return this.steps;
+    }
 
     @Override
     public GalleryRecyclerAdapter.ViewHolder onCreateViewHolder(final ViewGroup parent, int viewType) {
@@ -110,7 +145,24 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                                 .create().show();
                     }
                     else {
-                        sfm = new ExecuteSFM();
+                        ((MainActivity) context).setProcessingSFM(true);
+
+                        progress = new ProgressDialog(context);
+                        progress.setMessage("");
+                        progress.setProgress(0);
+                        progress.setIndeterminate(false);
+                        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                        progress.setMax(100);
+                        progress.show();
+
+                        mNotifyManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                        mBuilder = new NotificationCompat.Builder(context);
+                        mBuilder.setSmallIcon(R.drawable.shutter);
+                        // Displays the progress bar for the first time.
+                        mBuilder.setProgress(100, 0, false);
+                        mNotifyManager.notify(id, mBuilder.build());
+
+                        sfm = new ExecuteSFM(intrinsic, pictures, context, class_adapter);
                         sfm.execute();
                     }
 
@@ -161,245 +213,5 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     @Override
     public int getItemCount() {
         return mDataset.size();
-    }
-
-    private class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
-
-        long before, after;
-        AlertDialog alert;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            before = System.currentTimeMillis();
-            ((MainActivity) context).setProcessingSFM(true);
-            alert = new AlertDialog.Builder(context)
-                    .setTitle("SFM Reconstruction")
-                    .setMessage("This may take a while.")
-                    .setCancelable(false)
-                    .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                            sfm.cancel(true);
-                        }
-                    })
-                    .create();
-            alert.show();
-
-        }
-
-        @Override
-        protected List<Feature3D> doInBackground(String... urls) {
-
-            example = new StructureFromMotion();
-            if (!isCancelled()) {
-                return example.process(intrinsic, pictures, context);
-            }
-            else {
-                return null;
-            }
-
-        }
-
-        @Override
-        protected void onPostExecute(List<Feature3D> result) {
-
-            if (result != null) {
-                after = System.currentTimeMillis();
-
-                System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
-                Log.d("Log", "onPictureTaken - wrote bytes: " + result.size());
-
-                String points = "";
-
-                for (Feature3D p : result) {
-                    points += "v " + p.worldPt.x + " " + p.worldPt.y + " " + p.worldPt.z + "\n";
-                }
-
-                createObjs(result, points);
-
-                alert.dismiss();
-
-                ((MainActivity) context).setProcessingSFM(false);
-                ((MainActivity) context).setResult(points);
-                ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
-
-            }
-        }
-    }
-
-
-    public void createObjs(List<Feature3D> cloud, String vertices) {
-
-        FileOutputStream outStream = null;
-        OutputStreamWriter myOutWriter = null;
-
-        try {
-            String basePath = Environment.getExternalStorageDirectory() +
-                    File.separator + "SFM";
-            File dir = new File(basePath);
-            if(!dir.exists()){
-                dir.mkdir();
-                Log.d("Log", "onDirCreated");
-            }
-            basePath += File.separator + "Media";
-            dir = new File(basePath);
-            if(!dir.exists()){
-                dir.mkdir();
-                Log.d("Log", "onDirCreated");
-            }
-            basePath += File.separator + "Models";
-            dir = new File(basePath);
-            if(!dir.exists()){
-                dir.mkdir();
-                Log.d("Log", "onDirCreated");
-            }
-            basePath += File.separator + String.valueOf(System.currentTimeMillis());
-            dir = new File(basePath);
-            if(!dir.exists()){
-                dir.mkdir();
-                Log.d("Log", "onDirCreated");
-            }
-
-            System.out.printf("Point cloud size: " + cloud.size());
-            System.out.println("Getting point cloud");
-            String points = getPoints(cloud, vertices);
-            System.out.println("Getting sequential");
-            String sequential = getSequential(cloud, vertices);
-            String allToAll = getAllToAll(cloud, vertices);
-
-            String filePath;
-
-            System.out.println("Saving");
-
-            filePath = basePath + File.separator + "points.obj";
-            dir = new File(filePath);
-            outStream = new FileOutputStream(dir);
-            myOutWriter = new OutputStreamWriter(outStream);
-            myOutWriter.append(points);
-            myOutWriter.close();
-
-            filePath = basePath + File.separator + "sequential.obj";
-            dir = new File(filePath);
-            outStream = new FileOutputStream(dir);
-            myOutWriter = new OutputStreamWriter(outStream);
-            myOutWriter.append(sequential);
-            myOutWriter.close();
-
-
-            filePath = basePath + File.separator + "allToAll.obj";
-            dir = new File(filePath);
-            outStream = new FileOutputStream(dir);
-            myOutWriter = new OutputStreamWriter(outStream);
-            myOutWriter.append(allToAll);
-            myOutWriter.close();
-
-
-            outStream.flush();
-            outStream.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-        }
-    }
-
-    public String getPoints(List<Feature3D> cloud, String vertices) {
-        String result = "";
-
-        for (Feature3D point : cloud) {
-            for (int i = 0; i < 8; i++) {
-                result += "v ";
-                result += (point.worldPt.x + (((i % 2) == 0) ? 0.05 : -0.05)) + " " + (point.worldPt.y + (((i > 1) && (i < 5)) ? 0.05 : -0.05)) + " " + (point.worldPt.z + ((i < 4) ? 0.05 : -0.05));
-                result += '\n';
-            }
-        }
-
-        int index = -1;
-        for (Feature3D point : cloud) {
-            index++;
-            int start = (index * 8) + 1;
-
-            result += "f ";
-            result += (start + 0) + " " + (start + 1) + " " + (start + 2);
-            result += '\n';
-            result += "f ";
-            result += (start + 2) + " " + (start + 1) + " " + (start + 3);
-            result += '\n';
-            result += "f ";
-            result += (start + 2) + " " + (start + 3) + " " + (start + 4);
-            result += '\n';
-            result += "f ";
-            result += (start + 4) + " " + (start + 3) + " " + (start + 5);
-            result += '\n';
-            result += "f ";
-            result += (start + 4) + " " + (start + 5) + " " + (start + 6);
-            result += '\n';
-            result += "f ";
-            result += (start + 6) + " " + (start + 5) + " " + (start + 7);
-            result += '\n';
-            result += "f ";
-            result += (start + 6) + " " + (start + 7) + " " + (start + 0);
-            result += '\n';
-            result += "f ";
-            result += (start + 0) + " " + (start + 7) + " " + (start + 1);
-            result += '\n';
-            result += "f ";
-            result += (start + 1) + " " + (start + 7) + " " + (start + 3);
-            result += '\n';
-            result += "f ";
-            result += (start + 3) + " " + (start + 7) + " " + (start + 5);
-            result += '\n';
-            result += "f ";
-            result += (start + 6) + " " + (start + 0) + " " + (start + 4);
-            result += '\n';
-            result += "f ";
-            result += (start + 4) + " " + (start + 0) + " " + (start + 2);
-            result += '\n';
-        }
-
-
-        return result;
-    }
-
-    public String getSequential(List<Feature3D> cloud, String vertices) {
-        String result = vertices;
-        result += "\n";
-
-        for(int i = 0 ; i <= cloud.size(); i++) {
-            result += "f ";
-            result += ((i % (cloud.size())) + 1) + " " + (((i + 1) % (cloud.size())) + 1) + " " + (((i + 2) % (cloud.size())) + 1);
-            result += '\n';
-            result += "f ";
-            result += (((i + 2)  % (cloud.size())) + 1) + " " + (((i + 1) % (cloud.size())) + 1) + " " + ((i % (cloud.size())) + 1);
-            result += '\n';
-        }
-
-
-
-        return result;
-    }
-
-    public String getAllToAll(List<Feature3D> cloud, String vertices) {
-        String result = vertices;
-        result += "\n";
-
-        for (int i = 1; i <= cloud.size(); i++) {
-            for (int j = 1; j <= cloud.size(); j++) {
-                result += "f ";
-                result += 1 + " " + i + " " + j;
-                result += '\n';
-                result += "f ";
-                result += j + " " + i + " " + 1;
-                result += '\n';
-            }
-        }
-
-
-        return result;
     }
 }
