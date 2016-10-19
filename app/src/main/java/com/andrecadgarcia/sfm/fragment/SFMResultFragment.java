@@ -32,8 +32,10 @@ public class SFMResultFragment extends Fragment{
 
             rootview = inflater.inflate(R.layout.fragment_sfm_result, container, false);
             result = (TextView) rootview.findViewById(R.id.tv_sfm_result);
-            result.setText(((MainActivity) getContext()).getResult());
+
         }
+
+        result.setText(((MainActivity) getContext()).getResult());
 
 
         return rootview;

@@ -28,8 +28,6 @@ public class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
     List<String> pictures;
     Context context;
 
-    String title;
-
     public ExecuteSFM(IntrinsicParameters intrinsic, List<String> pictures, Context context, GalleryRecyclerAdapter adapter) {
         this.context = context;
         this.adapter = adapter;
@@ -95,6 +93,8 @@ public class ExecuteSFM extends AsyncTask<String, Void, List<Feature3D>> {
                 dir.mkdir();
                 Log.d("Log", "onDirCreated");
             }
+
+            adapter.setVertices(points);
 
             ExecuteObjectCreator objectCreator = new ExecuteObjectCreator(result, points, adapter, context, basePath);
             objectCreator.execute();

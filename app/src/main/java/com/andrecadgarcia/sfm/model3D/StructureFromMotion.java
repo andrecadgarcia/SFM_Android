@@ -149,24 +149,40 @@ public class StructureFromMotion {
                 new ConfigPnP(intrinsic), new ConfigRansac(4000, inlierTol));
 
         // find features in each image
-        detectImageFeatures(colorImages);
+        if (!detectImageFeatures(colorImages)) {
+            return null;
+        }
 
         // see which images are the most similar to each o ther
         double[][] matrix = computeConnections();
 
-        printConnectionMatrix(matrix);
+        if (matrix == null) {
+            return null;
+        }
+
+        if (!printConnectionMatrix(matrix)) {
+            return null;
+        }
 
         // find the image which is connected to the most other images.  Use that as the origin of the arbitrary
         // coordinate system
         int bestImage = selectMostConnectFrame(colorImages, matrix);
 
+        if (bestImage == -1) {
+            return null;
+        }
+
         // Use two images to initialize the scene reconstruction
-        initializeReconstruction(colorImages, matrix, bestImage);
+        if (!initializeReconstruction(colorImages, matrix, bestImage)) {
+            return null;
+        }
 
         // Process rest of the images and compute 3D coordinates
         List<Integer> seed = new ArrayList<Integer>();
         seed.add(bestImage);
-        performReconstruction(seed, -1, matrix);
+        if (!performReconstruction(seed, -1, matrix)) {
+            return null;
+        }
 
         return featuresAll;
     }
@@ -175,7 +191,7 @@ public class StructureFromMotion {
      * Initialize the reconstruction by finding the image which is most similar to the "best" image.  Estimate
      * its pose up to a scale factor and create the initial set of 3D features
      */
-    private void initializeReconstruction(List<String> colorImages, double[][] matrix, int bestImage) {
+    private boolean initializeReconstruction(List<String> colorImages, double[][] matrix, int bestImage) {
         // Set all images, but the best one, as not having been estimated yet
         estimatedImage = new boolean[colorImages.size()];
         processedImage = new boolean[colorImages.size()];
@@ -187,7 +203,9 @@ public class StructureFromMotion {
         for (int i = 0; i < colorImages.size(); i++) {
 
             progress = 40 + ((i*10)/colorImages.size());
-            adapter.setProgress(progress);
+            if (!adapter.setProgress(progress)) {
+                return false;
+            }
 
             motionWorldToCamera[i] = new Se3_F64();
             imageFeature3D.add(new ArrayList<Feature3D>());
@@ -199,6 +217,8 @@ public class StructureFromMotion {
         // pick the image most similar to the original image to initialize pose estimation
         int firstChild = findBestFit(matrix, bestImage);
         initialize(bestImage, firstChild);
+
+        return true;
     }
 
     /**
@@ -211,7 +231,9 @@ public class StructureFromMotion {
         for (int i = 0; i < colorImages.size(); i++) {
 
             progress = 30 + ((i*10)/colorImages.size());
-            adapter.setProgress(progress);
+            if (!adapter.setProgress(progress)) {
+                return -1;
+            }
 
             int count = 0;
             for (int j = 0; j < colorImages.size(); j++) {
@@ -235,14 +257,16 @@ public class StructureFromMotion {
     /**
      * Detect image features in all the images.  Save location, description, and color
      */
-    private void detectImageFeatures(List<String> colorImages) {
+    private boolean detectImageFeatures(List<String> colorImages) {
         System.out.println("Detecting Features in each image.  Total " + colorImages.size());
         Bitmap colorImage;
         File f;
         for (int i = 0; i < colorImages.size(); i++) {
 
             progress = (i*10/colorImages.size());
-            adapter.setProgress(progress);
+            if (!adapter.setProgress(progress)) {
+                return false;
+            }
 
             System.out.print("*");
             f = new File(colorImages.get(i));
@@ -267,6 +291,7 @@ public class StructureFromMotion {
         adapter.setProgress(progress);
 
         System.out.println();
+        return true;
     }
 
     /**
@@ -278,7 +303,9 @@ public class StructureFromMotion {
         for (int i = 0; i < imageVisualFeatures.size(); i++) {
 
             progress = 10 + (i*10/imageVisualFeatures.size());
-            adapter.setProgress(progress);
+            if (!adapter.setProgress(progress)) {
+                return null;
+            }
 
             for (int j = i + 1; j < imageVisualFeatures.size(); j++) {
                 System.out.printf("Associated %02d %02d ", i, j);
@@ -302,11 +329,13 @@ public class StructureFromMotion {
     /**
      * Prints out which frames are connected to each other
      */
-    private void printConnectionMatrix(double[][] matrix) {
+    private boolean printConnectionMatrix(double[][] matrix) {
         for (int i = 0; i < matrix.length; i++) {
 
             progress = 20 + (i*10/imageVisualFeatures.size());
-            adapter.setProgress(progress);
+            if(!adapter.setProgress(progress)) {
+                return false;
+            }
 
             for (int j = 0; j < matrix.length; j++) {
                 if (matrix[i][j] >= connectThreshold) {
@@ -321,6 +350,8 @@ public class StructureFromMotion {
 
         progress = 30;
         adapter.setProgress(progress);
+
+        return true;
     }
 
     /**
@@ -421,7 +452,7 @@ public class StructureFromMotion {
     /**
      * Perform a breadth first search through connection graph until the motion to all images has been found
      */
-    private void performReconstruction(List<Integer> parents, int childAdd, double matrix[][]) {
+    private boolean performReconstruction(List<Integer> parents, int childAdd, double matrix[][]) {
 
         System.out.println("--------- Total Parents " + parents.size());
 
@@ -436,7 +467,9 @@ public class StructureFromMotion {
             for (int i = 0; i < estimatedImage.length; i++) {
 
                 progress = 50 + ((i * 50) / estimatedImage.length);
-                adapter.setProgress(progress);
+                if (!adapter.setProgress(progress)) {
+                    return false;
+                }
 
                 // see if it is connected to the target and has not had its motion estimated
                 if (matrix[parent][i] > connectThreshold && !processedImage[i]) {
@@ -449,6 +482,8 @@ public class StructureFromMotion {
         if (!children.isEmpty()) {
             performReconstruction(children, -1, matrix);
         }
+
+        return true;
     }
 
     /**

@@ -55,6 +55,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     private ExecuteSFM sfm;
 
     IntrinsicParameters intrinsic;
+    String vertices = "";
 
     ProgressDialog progress;
     GalleryRecyclerAdapter class_adapter = this;
@@ -62,7 +63,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
 
     private NotificationManager mNotifyManager;
     private NotificationCompat.Builder mBuilder;
-    int id = 1;
+    int notification_id = 0;
 
     long before, after;
     long before_sfm, after_sfm;
@@ -71,6 +72,8 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     long before_alltoall, after_alltoall;
 
     double elapsed = 0;
+
+    boolean shouldCancel = false;
 
     private static final String ASSETS_TARGET_DIRECTORY = Environment.getExternalStorageDirectory() + File.separator
             + "SFM" + File.separator + "Media" + File.separator + "Models" + File.separator;
@@ -91,28 +94,54 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
         this.context = context;
     }
 
-    public void setProgress(int progress) {
+    public boolean setProgress(int progress) {
         this.progress.setProgress(progress);
         // Displays the progress bar for the first time.
         mBuilder.setProgress(100, progress, false);
-        mNotifyManager.notify(id, mBuilder.build());
+        mNotifyManager.notify(notification_id, mBuilder.build());
+
+        return !shouldCancel;
     }
 
     public void setMessages(String message) {
         this.progress.setMessage(message);
         mBuilder.setContentTitle(message);
-        mNotifyManager.notify(id, mBuilder.build());
+        mNotifyManager.notify(notification_id, mBuilder.build());
+    }
+
+    public void setVertices(String vertices) {
+        this.vertices = vertices;
     }
 
     public void dismissAlert() {
         this.progress.dismiss();
         mBuilder.setProgress(0, 0, false);
         mBuilder.setContentTitle("Reconstruction Complete");
+        mNotifyManager.notify(notification_id, mBuilder.build());
 
         after_alltoall = System.currentTimeMillis();
         after = System.currentTimeMillis();
         elapsed = (after - before) / 1000.0;
         System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
+
+        sfm.cancel(true);
+    }
+
+    public void cancelProcess() {
+        this.progress.dismiss();
+        mBuilder.setProgress(0, 0, false);
+        mBuilder.setContentTitle("Reconstruction Cancelled");
+        mNotifyManager.notify(notification_id, mBuilder.build());
+
+        after = System.currentTimeMillis();
+        elapsed = (after - before) / 1000.0;
+        System.out.println("Elapsed time " + (after - before) / 1000.0 + " (s)");
+
+        String elapsed = getElapsed();
+
+        ((MainActivity) context).setProcessingSFM(false);
+        ((MainActivity) context).setResult(elapsed + vertices);
+        ((MainActivity) context).fragmentTransaction(MainActivity.SFMRESULT_FRAGMENT);
     }
 
     public void addStep() {
@@ -143,10 +172,10 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
     }
 
     public String getElapsed() {
-        return  "\nSFM Reconstruction: " + (after_sfm - before_sfm) / 1000.0 + " s\n" +
-                "Point Cloud: " + (after_points - before_points) / 1000.0 + " s\n" +
-                "Sequential: " + (after_sequential - before_sequential) / 1000.0 + " s\n" +
-                "All to All: " + (after_alltoall - before_alltoall) / 1000.0 + " s\n\n" +
+        return  "\nSFM Reconstruction: " + ((getSteps() > 1) ? ((after_sfm - before_sfm) / 1000.0 + " s\n") : ("Cancelled\n")) +
+                "Sequential: " + ((getSteps() > 2) ? ((after_sequential - before_sequential) / 1000.0 + " s\n") : ("Cancelled\n")) +
+                "Point Cloud: " + ((getSteps() > 3) ? ((after_points - before_points) / 1000.0 + " s\n") : ("Cancelled\n")) +
+                "All to All: " + ((getSteps() > 4) ? ((after_alltoall - before_alltoall) / 1000.0 + " s\n\n") : ("Cancelled\n\n")) +
                 "Elapsed Time: " + (after - before) / 1000.0 + " s\n\n";
 
     }
@@ -188,12 +217,62 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                     else {
                         ((MainActivity) context).setProcessingSFM(true);
 
+                        notification_id++;
+                        shouldCancel = false;
+                        steps = 0;
+                        vertices = "";
+
                         progress = new ProgressDialog(context);
                         progress.setMessage("");
+                        progress.setCancelable(false);
                         progress.setProgress(0);
                         progress.setIndeterminate(false);
                         progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                         progress.setMax(100);
+                        progress.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                                shouldCancel = true;
+                                cancelProcess();
+                                /*
+                                progress.hide();
+                                String message = "";
+                                if (getSteps() == 1 ) {
+                                    message = "SFM is not completed, nothing will be stored. Would you like to cancel anyway?";
+                                }
+                                else if (getSteps() == 2) {
+                                    message = "SFM is not completed, but yet none object was created, nothing will be stored. Would you like to cancel anyway?";
+                                }
+                                else if (getSteps() == 3) {
+                                    message = "SFM is not completed, only sequential object will be stored. Would you like to cancel anyway?";
+                                }
+                                else {
+                                    message = "SFM is not completed, only sequential and point cloud objects will be stored. Would you like to cancel anyway?";
+                                }
+                                new AlertDialog.Builder(context)
+                                        .setTitle("Cancel Process")
+                                        .setMessage(message)
+                                        .setCancelable(true)
+                                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                dialogInterface.dismiss();
+                                                progress.show();
+                                            }
+                                        })
+                                        .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                dialogInterface.dismiss();
+                                                shouldCancel = true;
+                                                cancelProcess();
+                                            }
+                                        })
+                                        .create().show();
+                                        */
+                            }
+                        });
                         progress.show();
 
                         before = System.currentTimeMillis();
@@ -203,7 +282,7 @@ public class GalleryRecyclerAdapter extends RecyclerView.Adapter<GalleryRecycler
                         mBuilder.setSmallIcon(R.drawable.shutter);
                         // Displays the progress bar for the first time.
                         mBuilder.setProgress(100, 0, false);
-                        mNotifyManager.notify(id, mBuilder.build());
+                        mNotifyManager.notify(notification_id, mBuilder.build());
 
                         sfm = new ExecuteSFM(intrinsic, pictures, context, class_adapter);
                         sfm.execute();

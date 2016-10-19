@@ -31,7 +31,6 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
     List<Feature3D> cloud;
     String vertices;
     String basepath;
-    String title;
 
     public ExecuteObjectCreator(List<Feature3D> cloud, String vertices, GalleryRecyclerAdapter adapter, Context context, String basepath) {
         this.context = context;
@@ -51,11 +50,11 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
 
         switch(adapter.getSteps()) {
             case 2:
-                adapter.setMessages("Point Cloud Creation (2/4)");
+                adapter.setMessages("Sequential Creation (2/4)");
                 adapter.setProgress(0);
                 break;
             case 3:
-                adapter.setMessages("Sequential Creation (3/4)");
+                adapter.setMessages("Point Cloud Creation (3/4)");
                 adapter.setProgress(0);
                 break;
             case 4:
@@ -73,9 +72,9 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
         if (!isCancelled()) {
             switch(adapter.getSteps()) {
                 case 2:
-                    return getPoints(cloud, vertices);
-                case 3:
                     return getSequential(cloud, vertices);
+                case 3:
+                    return getPoints(cloud, vertices);
                 case 4:
                     return getAllToAll(cloud, vertices);
                 default:
@@ -98,10 +97,10 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
                 filePath = basepath + File.separator;
                 switch (adapter.getSteps()) {
                     case 2:
-                        filePath = filePath + "points.obj";
+                        filePath = filePath + "sequential.obj";
                         break;
                     case 3:
-                        filePath = filePath + "sequential.obj";
+                        filePath = filePath + "points.obj";
                         break;
                     case 4:
                         filePath = filePath + "allToAll.obj";
@@ -122,6 +121,8 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
             }
 
             if (adapter.getSteps() == 4) {
+
+                adapter.addStep();
                 adapter.dismissAlert();
 
                 ((MainActivity) context).setProcessingSFM(false);
@@ -142,7 +143,9 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
 
         for (Feature3D point : cloud) {
 
-            adapter.setProgress(((j*50)/cloud.size()));
+            if (!adapter.setProgress(((j*50)/cloud.size()))) {
+                return null;
+            }
 
             for (int i = 0; i < 8; i++) {
                 result += "v ";
@@ -159,7 +162,9 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
         for (Feature3D point : cloud) {
             index++;
 
-            adapter.setProgress(50+((j*50)/cloud.size()));
+            if (!adapter.setProgress(50+((j*50)/cloud.size()))) {
+                return null;
+            }
 
             int start = (index * 8) + 1;
 
@@ -215,7 +220,9 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
 
         for(int i = 0 ; i <= cloud.size(); i++) {
 
-            adapter.setProgress(((j*100)/cloud.size()));
+            if (!adapter.setProgress(((j*100)/cloud.size()))) {
+                return null;
+            }
 
             result += "f ";
             result += ((i % (cloud.size())) + 1) + " " + (((i + 1) % (cloud.size())) + 1) + " " + (((i + 2) % (cloud.size())) + 1);
@@ -238,7 +245,9 @@ public class ExecuteObjectCreator extends AsyncTask<String, Void, String> {
 
         for (int i = 1; i <= cloud.size(); i++) {
 
-            adapter.setProgress(((k*100)/cloud.size()));
+            if (!adapter.setProgress(((k*100)/cloud.size()))) {
+                return null;
+            }
 
             for (int j = 1; j <= cloud.size(); j++) {
                 result += "f ";
